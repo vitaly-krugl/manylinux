@@ -11,7 +11,7 @@ CPYTHON_VERSIONS="2.6.9 2.7.11 3.3.6 3.4.4 3.5.1"
 # archive
 OPENSSL_ROOT=openssl-1.0.2h
 OPENSSL_HASH=1d4007e53aad94a5b2002fe045ee7bb0b3d98f1a47f8b2bc851dcd1c74332919
-EPEL_RPM_HASH=0dcc89f9bf67a2a515bad64569b7a9615edc5e018f676a578d5fd0f17d3c81d4
+EPEL_RPM_HASH=e5ed9ecf22d0c4279e92075a64c757ad2b38049bcf5c16c4f2b75d5f6860dc0d
 DEVTOOLS_HASH=a8ebeb4bed624700f727179e6ef771dafe47651131a00a78b342251415646acc
 PATCHELF_HASH=d9afdff4baeacfbc64861454f368b7f2c15c44d245293f7587bbf726bfe722fb
 CURL_ROOT=curl-7.49.1
@@ -32,15 +32,15 @@ source $MY_DIR/build_utils.sh
 
 # EPEL support
 yum -y install wget curl
-curl -sLO https://dl.fedoraproject.org/pub/epel/5/x86_64/epel-release-5-4.noarch.rpm
-check_sha256sum epel-release-5-4.noarch.rpm $EPEL_RPM_HASH
+curl -sLO https://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
+check_sha256sum epel-release-6-8.noarch.rpm $EPEL_RPM_HASH
 
 # Dev toolset (for LLVM and other projects requiring C++11 support)
 curl -sLO http://people.centos.org/tru/devtools-2/devtools-2.repo
 check_sha256sum devtools-2.repo $DEVTOOLS_HASH
 mv devtools-2.repo /etc/yum.repos.d/devtools-2.repo
-rpm -Uvh --replacepkgs epel-release-5*.rpm
-rm -f epel-release-5*.rpm
+rpm -Uvh --replacepkgs epel-release-6*.rpm
+rm -f epel-release-6*.rpm
 
 # Development tools and libraries
 yum -y install bzip2 make git patch unzip bison yasm diffutils \
