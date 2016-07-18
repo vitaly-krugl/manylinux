@@ -55,6 +55,9 @@ function do_cpython_build {
     make -j2 > /dev/null
     make install > /dev/null
     popd
+    echo "ZZZ looking for libpython"
+    find / -name 'libpython*.so*'
+    find / -name 'libpython*.so'
     rm -rf Python-$py_ver
     # Some python's install as bin/python3. Make them available as
     # bin/python.
