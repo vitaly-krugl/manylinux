@@ -5,7 +5,10 @@
 set -ex
 
 # Python versions to be installed in /opt/$VERSION_NO
-CPYTHON_VERSIONS="2.6.9 2.7.11 3.3.6 3.4.4 3.5.1"
+# NOTE Only need python 2.7.11 for nupic.core at this time, so remove others to
+# expedite build. The original manylinux docker image projects builds many
+# python versions.
+CPYTHON_VERSIONS="2.7.11"
 
 # openssl version to build, with expected sha256 hash of .tar.gz
 # archive
