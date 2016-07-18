@@ -57,13 +57,14 @@ function do_cpython_build {
     popd
     echo "ZZZ looking for libpython"
     find / -name 'libpython*.so*'
-    find / -name 'libpython*.so'
     rm -rf Python-$py_ver
     # Some python's install as bin/python3. Make them available as
     # bin/python.
     if [ -e ${prefix}/bin/python3 ]; then
         ln -s python3 ${prefix}/bin/python
     fi
+    # NOTE Make libpython shared library visible to python calls below
+    local LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${prefix}/lib"
     ${prefix}/bin/python get-pip.py
     ${prefix}/bin/pip install wheel
     local abi_tag=$(${prefix}/bin/python ${MY_DIR}/python-tag-abi-tag.py)
