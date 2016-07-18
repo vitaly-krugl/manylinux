@@ -65,14 +65,14 @@ build_openssl $OPENSSL_ROOT $OPENSSL_HASH
 mkdir -p /opt/python
 build_cpythons $CPYTHON_VERSIONS
 
-PY35_BIN=/opt/python/cp35-cp35m/bin
+PY27_BIN=/opt/python/cp27-cp27mu/bin
 
 # Our openssl doesn't know how to find the system CA trust store
 #   (https://github.com/pypa/manylinux/issues/53)
 # And it's not clear how up-to-date that is anyway
 # So let's just use the same one pip and everyone uses
-$PY35_BIN/pip install certifi
-ln -s $($PY35_BIN/python -c 'import certifi; print(certifi.where())') \
+$PY27_BIN/pip install certifi
+ln -s $($PY27_BIN/python -c 'import certifi; print(certifi.where())') \
       /opt/_internal/certs.pem
 # If you modify this line you also have to modify the versions in the
 # Dockerfiles:
@@ -96,8 +96,8 @@ tar -xzf patchelf-0.9njs2.tar.gz
 rm -rf patchelf-0.9njs2.tar.gz patchelf-0.9njs2
 
 # Install latest pypi release of auditwheel
-$PY35_BIN/pip install auditwheel
-ln -s $PY35_BIN/auditwheel /usr/local/bin/auditwheel
+$PY27_BIN/pip install auditwheel
+ln -s $PY27_BIN/auditwheel /usr/local/bin/auditwheel
 
 # Clean up development headers and other unnecessary stuff for
 # final image
