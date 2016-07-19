@@ -13,7 +13,7 @@ env:
 
 script:
   # We're only interested in x86_64.
-  - docker build --rm -t numenta/manylinux1_x86_64_centos6:$COMMIT -f docker/Dockerfile-x86_64 docker/
+  - docker build --rm -t quay.io/numenta/manylinux1_x86_64_centos6:$COMMIT -f docker/Dockerfile-x86_64 docker/
 
 
 deploy:
