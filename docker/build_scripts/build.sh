@@ -66,6 +66,8 @@ mkdir -p /opt/python
 build_cpythons $CPYTHON_VERSIONS
 
 PY27_BIN=/opt/python/cp27-cp27mu/bin
+ORIGINAL_LD_LIBRARY_PATH="${LD_LIBRARY_PATH}"
+LD_LIBRARY_PATH="${ORIGINAL_LD_LIBRARY_PATH}:$(dirname ${PY27_BIN})/lib"
 
 # Our openssl doesn't know how to find the system CA trust store
 #   (https://github.com/pypa/manylinux/issues/53)
@@ -122,9 +124,15 @@ find /opt/_internal \
   -print0 | xargs -0 rm -f
 
 for PYTHON in /opt/python/*/bin/python; do
+    # Add matching directory of libpython shared library to library lookup path
+    LD_LIBRARY_PATH="${ORIGINAL_LD_LIBRARY_PATH}:$(dirname $(dirname ${PYTHON}))/lib"
+
     # Smoke test to make sure that our Pythons work, and do indeed detect as
     # being manylinux compatible:
     $PYTHON $MY_DIR/manylinux1-check.py
     # Make sure that SSL cert checking works
     $PYTHON $MY_DIR/ssl-check.py
 done
+
+# Restore LD_LIBRARY_PATH
+LD_LIBRARY_PATH="${ORIGINAL_LD_LIBRARY_PATH}"
