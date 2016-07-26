@@ -48,16 +48,23 @@ function do_cpython_build {
     local prefix="/opt/_internal/cpython-${py_ver}${dir_suffix}"
     mkdir -p ${prefix}/lib
     # -Wformat added for https://bugs.python.org/issue17547 on Python 2.6
-    CFLAGS="-Wformat" ./configure --prefix=${prefix} --disable-shared $unicode_flags > /dev/null
+
+    # NOTE --enable-shared for generating libpython shared library needed for
+    # linking of some of the nupic.core test executables.
+    CFLAGS="-Wformat" ./configure --prefix=${prefix} --enable-shared $unicode_flags > /dev/null
     make -j2 > /dev/null
     make install > /dev/null
     popd
+    echo "ZZZ looking for libpython"
+    find / -name 'libpython*.so*'
     rm -rf Python-$py_ver
     # Some python's install as bin/python3. Make them available as
     # bin/python.
     if [ -e ${prefix}/bin/python3 ]; then
         ln -s python3 ${prefix}/bin/python
     fi
+    # NOTE Make libpython shared library visible to python calls below
+    local LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${prefix}/lib"
     ${prefix}/bin/python get-pip.py
     ${prefix}/bin/pip install wheel
     local abi_tag=$(${prefix}/bin/python ${MY_DIR}/python-tag-abi-tag.py)
@@ -71,7 +78,8 @@ function build_cpython {
     check_var $PYTHON_DOWNLOAD_URL
     wget -q $PYTHON_DOWNLOAD_URL/$py_ver/Python-$py_ver.tgz
     if [ $(lex_pyver $py_ver) -lt $(lex_pyver 3.3) ]; then
-        do_cpython_build $py_ver ucs2
+        # NOTE We only need wide unicode for nupic.bindings wheel
+        #do_cpython_build $py_ver ucs2
         do_cpython_build $py_ver ucs4
     else
         do_cpython_build $py_ver none

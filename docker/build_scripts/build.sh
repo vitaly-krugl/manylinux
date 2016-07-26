@@ -5,13 +5,17 @@
 set -ex
 
 # Python versions to be installed in /opt/$VERSION_NO
-CPYTHON_VERSIONS="2.6.9 2.7.11 3.3.6 3.4.4 3.5.1"
+# NOTE Only need python 2.7.11 for nupic.core/nupic.bindings at this time, so
+# remove others to expedite build and reduce docker image size. The original
+# manylinux docker image project builds many python versions.
+# NOTE We added back 3.5.1, since auditwheel requires python 3.3+
+CPYTHON_VERSIONS="2.7.11 3.5.1"
 
 # openssl version to build, with expected sha256 hash of .tar.gz
 # archive
 OPENSSL_ROOT=openssl-1.0.2h
 OPENSSL_HASH=1d4007e53aad94a5b2002fe045ee7bb0b3d98f1a47f8b2bc851dcd1c74332919
-EPEL_RPM_HASH=0dcc89f9bf67a2a515bad64569b7a9615edc5e018f676a578d5fd0f17d3c81d4
+EPEL_RPM_HASH=e5ed9ecf22d0c4279e92075a64c757ad2b38049bcf5c16c4f2b75d5f6860dc0d
 DEVTOOLS_HASH=a8ebeb4bed624700f727179e6ef771dafe47651131a00a78b342251415646acc
 PATCHELF_HASH=d9afdff4baeacfbc64861454f368b7f2c15c44d245293f7587bbf726bfe722fb
 CURL_ROOT=curl-7.49.1
@@ -32,15 +36,15 @@ source $MY_DIR/build_utils.sh
 
 # EPEL support
 yum -y install wget curl
-curl -sLO https://dl.fedoraproject.org/pub/epel/5/x86_64/epel-release-5-4.noarch.rpm
-check_sha256sum epel-release-5-4.noarch.rpm $EPEL_RPM_HASH
+curl -sLO https://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
+check_sha256sum epel-release-6-8.noarch.rpm $EPEL_RPM_HASH
 
 # Dev toolset (for LLVM and other projects requiring C++11 support)
 curl -sLO http://people.centos.org/tru/devtools-2/devtools-2.repo
 check_sha256sum devtools-2.repo $DEVTOOLS_HASH
 mv devtools-2.repo /etc/yum.repos.d/devtools-2.repo
-rpm -Uvh --replacepkgs epel-release-5*.rpm
-rm -f epel-release-5*.rpm
+rpm -Uvh --replacepkgs epel-release-6*.rpm
+rm -f epel-release-6*.rpm
 
 # Development tools and libraries
 yum -y install bzip2 make git patch unzip bison yasm diffutils \
@@ -63,6 +67,11 @@ mkdir -p /opt/python
 build_cpythons $CPYTHON_VERSIONS
 
 PY35_BIN=/opt/python/cp35-cp35m/bin
+# NOTE Since our custom manylinux image builds pythons with shared
+# libpython, we need to add libpython's dir to LD_LIBRARY_PATH before running
+# python.
+ORIGINAL_LD_LIBRARY_PATH="${LD_LIBRARY_PATH}"
+LD_LIBRARY_PATH="${ORIGINAL_LD_LIBRARY_PATH}:$(dirname ${PY35_BIN})/lib"
 
 # Our openssl doesn't know how to find the system CA trust store
 #   (https://github.com/pypa/manylinux/issues/53)
@@ -119,9 +128,15 @@ find /opt/_internal \
   -print0 | xargs -0 rm -f
 
 for PYTHON in /opt/python/*/bin/python; do
+    # Add matching directory of libpython shared library to library lookup path
+    LD_LIBRARY_PATH="${ORIGINAL_LD_LIBRARY_PATH}:$(dirname $(dirname ${PYTHON}))/lib"
+
     # Smoke test to make sure that our Pythons work, and do indeed detect as
     # being manylinux compatible:
     $PYTHON $MY_DIR/manylinux1-check.py
     # Make sure that SSL cert checking works
     $PYTHON $MY_DIR/ssl-check.py
 done
+
+# Restore LD_LIBRARY_PATH
+LD_LIBRARY_PATH="${ORIGINAL_LD_LIBRARY_PATH}"
